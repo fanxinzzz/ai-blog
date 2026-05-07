@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Blog GitHub Pages Demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101820;
+        --panel: rgba(255, 255, 255, 0.08);
+        --panel-strong: rgba(255, 255, 255, 0.14);
+        --text: #f7f4ec;
+        --muted: #c6d0d6;
+        --accent: #f2c14e;
+        --ok: #53d769;
+        --bad: #ff6b6b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+        background:
+          radial-gradient(circle at 25% 20%, rgba(83, 215, 105, 0.16), transparent 28rem),
+          radial-gradient(circle at 78% 12%, rgba(242, 193, 78, 0.18), transparent 24rem),
+          linear-gradient(135deg, #101820 0%, #1f2a2e 52%, #111419 100%);
+        color: var(--text);
+      }
+
+      main {
+        width: min(1040px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 56px 0;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        max-width: 720px;
+        font-size: clamp(36px, 6vw, 72px);
+        line-height: 0.98;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .status,
+      .steps {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: var(--panel);
+        backdrop-filter: blur(18px);
+        border-radius: 8px;
+      }
+
+      .status {
+        padding: 22px;
+        display: grid;
+        gap: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.22);
+        color: var(--text);
+        padding: 12px 14px;
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #15110a;
+        padding: 12px 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(1.06);
+      }
+
+      .result {
+        min-height: 88px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.18);
+        padding: 14px;
+        color: var(--muted);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .result.ok {
+        color: var(--ok);
+      }
+
+      .result.bad {
+        color: var(--bad);
+      }
+
+      .steps {
+        margin-top: 28px;
+        padding: 22px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .tile {
+        min-height: 132px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        background: var(--panel-strong);
+        padding: 16px;
+      }
+
+      .tile strong {
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      code {
+        color: #ffe19a;
+      }
+
+      @media (max-width: 820px) {
+        main {
+          padding: 32px 0;
+        }
+
+        .hero,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div>
+          <h1>GitHub Pages 静态托管测试页</h1>
+          <p>
+            这个页面可以直接作为 GitHub Pages 的入口文件发布。它不依赖服务器渲染，
+            只用 HTML、CSS 和 JavaScript，并可测试云服务器后端的公开接口 CORS。
+          </p>
+        </div>
+        <div class="status">
+          <label>
+            后端 API 地址
+            <input id="apiBase" placeholder="https://api.example.com" />
+          </label>
+          <button id="testBtn" type="button">测试 /api/public/globe</button>
+          <div id="result" class="result">填入后端地址后点击测试。</div>
+        </div>
+      </section>
+
+      <section class="steps">
+        <p>发布验证点</p>
+        <div class="grid">
+          <div class="tile">
+            <strong>1. 静态入口</strong>
+            <p>GitHub Pages 能识别发布源顶层的 <code>index.html</code>。</p>
+          </div>
+          <div class="tile">
+            <strong>2. 禁用 Jekyll</strong>
+            <p><code>.nojekyll</code> 可避免 Vite 构建产物中的下划线文件被特殊处理。</p>
+          </div>
+          <div class="tile">
+            <strong>3. 跨域请求</strong>
+            <p>页面会从 <code>https://*.github.io</code> 调用你的云服务器 API。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const input = document.querySelector("#apiBase");
+      const button = document.querySelector("#testBtn");
+      const result = document.querySelector("#result");
+
+      const savedApiBase = localStorage.getItem("ai-blog-api-base") || "";
+      input.value = savedApiBase;
+
+      function setResult(text, type) {
+        result.className = `result ${type || ""}`;
+        result.textContent = text;
+      }
+
+      button.addEventListener("click", async () => {
+        const apiBase = input.value.trim().replace(/\/$/, "");
+        if (!apiBase) {
+          setResult("请先填写后端 API 地址，例如 https://api.example.com", "bad");
+          return;
+        }
+
+        localStorage.setItem("ai-blog-api-base", apiBase);
+        setResult("请求中...", "");
+
+        try {
+          const response = await fetch(`${apiBase}/api/public/globe`);
+          const text = await response.text();
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
+          }
+          const data = text ? JSON.parse(text) : [];
+          setResult(`连接成功，返回 ${Array.isArray(data) ? data.length : 1} 条数据。\n${JSON.stringify(data, null, 2)}`, "ok");
+        } catch (error) {
+          setResult(`连接失败：${error.message}`, "bad");
+        }
+      });
+    </script>
+  </body>
+</html>
