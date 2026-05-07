@@ -174,11 +174,11 @@
         </div>
         <div class="status">
           <label>
-            后端 API 地址
-            <input id="apiBase" placeholder="https://api.example.com" />
+            探测地址
+            <input id="probeUrl" placeholder="https://api.example.com/api/health/ping" />
           </label>
-          <button id="testBtn" type="button">测试 /api/public/globe</button>
-          <div id="result" class="result">填入后端地址后点击测试。</div>
+          <button id="testBtn" type="button">测试访问</button>
+          <div id="result" class="result">填入完整接口地址后点击测试。</div>
         </div>
       </section>
 
@@ -195,19 +195,19 @@
           </div>
           <div class="tile">
             <strong>3. 跨域请求</strong>
-            <p>页面会从 <code>https://*.github.io</code> 调用你的云服务器 API。</p>
+            <p>页面会从 <code>https://*.github.io</code> 调用你输入的完整接口地址。</p>
           </div>
         </div>
       </section>
     </main>
 
     <script>
-      const input = document.querySelector("#apiBase");
+      const input = document.querySelector("#probeUrl");
       const button = document.querySelector("#testBtn");
       const result = document.querySelector("#result");
 
-      const savedApiBase = localStorage.getItem("ai-blog-api-base") || "";
-      input.value = savedApiBase;
+      const savedProbeUrl = localStorage.getItem("ai-blog-probe-url") || "";
+      input.value = savedProbeUrl;
 
       function setResult(text, type) {
         result.className = `result ${type || ""}`;
@@ -215,23 +215,35 @@
       }
 
       button.addEventListener("click", async () => {
-        const apiBase = input.value.trim().replace(/\/$/, "");
-        if (!apiBase) {
-          setResult("请先填写后端 API 地址，例如 https://api.example.com", "bad");
+        const probeUrl = input.value.trim();
+        if (!probeUrl) {
+          setResult("请先填写完整接口地址，例如 https://api.example.com/api/health/ping", "bad");
           return;
         }
 
-        localStorage.setItem("ai-blog-api-base", apiBase);
+        if (!/^https?:\/\//i.test(probeUrl)) {
+          setResult("请输入以 http:// 或 https:// 开头的完整地址。", "bad");
+          return;
+        }
+
+        localStorage.setItem("ai-blog-probe-url", probeUrl);
         setResult("请求中...", "");
 
         try {
-          const response = await fetch(`${apiBase}/api/public/globe`);
+          const response = await fetch(probeUrl);
           const text = await response.text();
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
+            const reachedServer = response.status >= 400 && response.status < 500;
+            const message = `已收到响应，但接口返回 HTTP ${response.status}。\n${text || response.statusText}`;
+            setResult(
+              reachedServer
+                ? `${message}\n\n这通常说明浏览器已经能访问到后端服务，接下来需要检查路径是否正确或接口是否已放行。`
+                : message,
+              reachedServer ? "ok" : "bad"
+            );
+            return;
           }
-          const data = text ? JSON.parse(text) : [];
-          setResult(`连接成功，返回 ${Array.isArray(data) ? data.length : 1} 条数据。\n${JSON.stringify(data, null, 2)}`, "ok");
+          setResult(`连接成功，HTTP ${response.status}。\n${text || "(空响应)"}`, "ok");
         } catch (error) {
           setResult(`连接失败：${error.message}`, "bad");
         }
